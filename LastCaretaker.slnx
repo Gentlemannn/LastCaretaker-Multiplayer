@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="LastCaretaker/LastCaretaker.vcxproj" Id="3f35bbee-606b-434f-802a-c08865ed32eb" />
+</Solution>

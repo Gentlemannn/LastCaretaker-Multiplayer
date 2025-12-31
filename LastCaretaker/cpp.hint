@@ -1,0 +1,2 @@
+#define LASTCARETAKER_API __declspec(dllexport)
+#define LASTCARETAKER_API __declspec(dllimport)
