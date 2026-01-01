@@ -28,7 +28,7 @@ int main()
 
     SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    // 🔹 NON-BLOCKING
+    // NON-BLOCKING
     u_long mode = 1;
     ioctlsocket(sock, FIONBIO, &mode);
 
@@ -80,7 +80,7 @@ int main()
                 SetColor(7);
             }
 
-            // 🔥 ON AFFICHE LES COORDONNÉES QUOI QU’IL ARRIVE
+            // Coords
             if (!hasLast ||
                 pkt.x != lastX ||
                 pkt.y != lastY ||
@@ -103,7 +103,7 @@ int main()
             }
         }
 
-        // 🔹 TIMEOUT DISCONNECT
+        //  TIMEOUT DISCONNECT
         if (connected && now - lastPacketTime > 3000)
         {
             connected = false;
