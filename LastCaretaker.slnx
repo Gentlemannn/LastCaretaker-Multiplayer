@@ -4,4 +4,5 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="LastCaretaker/LastCaretaker.vcxproj" Id="3f35bbee-606b-434f-802a-c08865ed32eb" />
+  <Project Path="TheLastCaretaker - Multiplayer Launcher/TheLastCaretaker - Multiplayer Launcher.vcxproj" Id="75c6943b-99ab-4aa3-8fa9-04efe3f3bb8b" />
 </Solution>
