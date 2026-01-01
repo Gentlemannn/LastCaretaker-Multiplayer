@@ -2,107 +2,161 @@
 #include <cstdint>
 #include "pch.h"
 
-// ============================
-// Utils
-// ============================
-uintptr_t GetModuleBase(const wchar_t* moduleName)
+// =====================================================
+// X / Z POINTER (validated)
+// =====================================================
+
+constexpr uintptr_t BASE_XZ = 0x0A7C4118;
+
+constexpr uintptr_t XZ_230 = 0x230;
+constexpr uintptr_t XZ_2C0 = 0x2C0;
+constexpr uintptr_t XZ_238 = 0x238;
+constexpr uintptr_t XZ_00 = 0x00;
+constexpr uintptr_t XZ_20 = 0x20;
+constexpr uintptr_t XZ_1B8 = 0x1B8;
+
+constexpr uintptr_t OFF_X = 0x21C;
+constexpr uintptr_t OFF_Z = 0x224;
+
+// =====================================================
+// Y POINTER (validated)
+// =====================================================
+
+constexpr uintptr_t BASE_Y = 0x0A38D5A0;
+
+constexpr uintptr_t Y_3C0 = 0x3C0;
+constexpr uintptr_t Y_8B8 = 0x8B8;
+constexpr uintptr_t Y_340 = 0x340;
+constexpr uintptr_t Y_A8 = 0xA8;
+constexpr uintptr_t Y_158 = 0x158;
+constexpr uintptr_t Y_698 = 0x698;
+
+constexpr uintptr_t OFF_Y = 0xCF4;
+
+// =====================================================
+
+uintptr_t GetModuleBase()
 {
-    return (uintptr_t)GetModuleHandleW(moduleName);
+    return (uintptr_t)GetModuleHandleW(L"VoyageSteam-Win64-Shipping.exe");
 }
 
-// ============================
-// Résolution du pointeur position
-// ============================
-uintptr_t ResolvePositionBase()
+// =====================================================
+// Resolve X/Z base
+// =====================================================
+
+uintptr_t ResolveXZ()
 {
-    uintptr_t base = GetModuleBase(L"VoyageSteam-Win64-Shipping.exe");
+    uintptr_t base = GetModuleBase();
     if (!base) return 0;
 
-    uintptr_t p = *(uintptr_t*)(base + 0x0A7C4118);
-    if (!p) return 0;
+    uintptr_t addr = *(uintptr_t*)(base + BASE_XZ);
 
-    p = *(uintptr_t*)(p + 0x230);
-    if (!p) return 0;
+    __try
+    {
+        addr = *(uintptr_t*)(addr + XZ_230);
+        addr = *(uintptr_t*)(addr + XZ_2C0);
+        addr = *(uintptr_t*)(addr + XZ_238);
+        addr = *(uintptr_t*)(addr + XZ_00);
+        addr = *(uintptr_t*)(addr + XZ_20);
+        addr = *(uintptr_t*)(addr + XZ_1B8);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return 0;
+    }
 
-    p = *(uintptr_t*)(p + 0x2C0);
-    if (!p) return 0;
-
-    p = *(uintptr_t*)(p + 0x238);
-    if (!p) return 0;
-
-    p = *(uintptr_t*)(p + 0x00);
-    if (!p) return 0;
-
-    p = *(uintptr_t*)(p + 0x20);
-    if (!p) return 0;
-
-    p = *(uintptr_t*)(p + 0x1B8);
-    if (!p) return 0;
-
-    return p; // base FVector
+    return addr;
 }
 
-// ============================
-// Thread principal
-// ============================
+// =====================================================
+// Resolve Y base
+// =====================================================
+
+uintptr_t ResolveY()
+{
+    uintptr_t base = GetModuleBase();
+    if (!base) return 0;
+
+    uintptr_t addr = *(uintptr_t*)(base + BASE_Y);
+
+    __try
+    {
+        addr = *(uintptr_t*)(addr + Y_3C0);
+        addr = *(uintptr_t*)(addr + Y_8B8);
+        addr = *(uintptr_t*)(addr + Y_340);
+        addr = *(uintptr_t*)(addr + Y_A8);
+        addr = *(uintptr_t*)(addr + Y_158);
+        addr = *(uintptr_t*)(addr + Y_698);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return 0;
+    }
+
+    return addr;
+}
+
+// =====================================================
+// Safe float printing (2 decimals, no CRT)
+// =====================================================
+
+void PrintFloat(const wchar_t* label, float value)
+{
+    int integer = (int)value;
+    int decimal = (int)((value - integer) * 100.0f);
+    if (decimal < 0) decimal = -decimal;
+
+    wchar_t buf[64];
+    wsprintfW(buf, L"[POS] %s = %d.%02d\n", label, integer, decimal);
+    OutputDebugStringW(buf);
+}
+
+// =====================================================
+// Main thread
+// =====================================================
+
 DWORD WINAPI MainThread(LPVOID)
 {
-    Sleep(5000); // laisser le jeu charger
-
-    char buffer[128];
+    OutputDebugStringW(L"[DLL] Player position reader started\n");
+    Sleep(2000);
 
     while (true)
     {
-        __try
+        uintptr_t xzBase = ResolveXZ();
+        uintptr_t yBase = ResolveY();
+
+        if (xzBase && yBase)
         {
-            uintptr_t posBase = ResolvePositionBase();
-
-            if (posBase)
+            __try
             {
-                float fx = *(float*)(posBase + 0x21C);
-                float fz = *(float*)(posBase + 0x224);
+                float x = *(float*)(xzBase + OFF_X);
+                float z = *(float*)(xzBase + OFF_Z);
+                float y = *(float*)(yBase + OFF_Y);
 
-                int xi = (int)(fx * 100.0f);
-                int zi = (int)(fz * 100.0f);
-
-                int x_ent = xi / 100;
-                int x_dec = xi % 100; if (x_dec < 0) x_dec = -x_dec;
-
-                int z_ent = zi / 100;
-                int z_dec = zi % 100; if (z_dec < 0) z_dec = -z_dec;
-
-                wsprintfA(
-                    buffer,
-                    "[MYMULTI][POS] X=%d.%02d Z=%d.%02d",
-                    x_ent, x_dec,
-                    z_ent, z_dec
-                );
+                PrintFloat(L"X", x);
+                PrintFloat(L"Y", y);
+                PrintFloat(L"Z", z);
             }
-            else
+            __except (EXCEPTION_EXECUTE_HANDLER)
             {
-                wsprintfA(buffer, "[MYMULTI][POS] indisponible");
+                OutputDebugStringW(L"[POS] Read error\n");
             }
-
-            OutputDebugStringA(buffer);
-            OutputDebugStringA("\n");
         }
-        __except (EXCEPTION_EXECUTE_HANDLER)
+        else
         {
-            // Ici on absorbe le crash pendant le reload
-            OutputDebugStringA("[MYMULTI][WARN] Position invalide (reload)\n");
-            Sleep(500); // laisser Unreal respirer
+            OutputDebugStringW(L"[POS] Base not found\n");
         }
 
-        Sleep(100); // 10 Hz
+        Sleep(300); // ~3 updates per second
     }
 
     return 0;
 }
 
+// =====================================================
+// DLL entry point
+// =====================================================
 
-// ============================
-// DllMain
-// ============================
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID)
 {
     if (reason == DLL_PROCESS_ATTACH)
