@@ -15,26 +15,6 @@
 #define SERVER_IP   "127.0.0.1"
 #define SERVER_PORT 27015
 
-// =====================================================
-// PACKET
-// =====================================================
-
-#pragma pack(push, 1)
-struct PlayerPacket
-{
-    uint8_t type; // 1 = connect, 2 = position, 3 = disconnect
-    float x;
-    float y;
-    float z;
-};
-#pragma pack(pop)
-
-// =====================================================
-// POINTERS
-// =====================================================
-
-// X / Z
-constexpr uintptr_t BASE_XZ = 0x0A7C4118;
 constexpr uintptr_t XZ_230 = 0x230;
 constexpr uintptr_t XZ_2C0 = 0x2C0;
 constexpr uintptr_t XZ_238 = 0x238;
@@ -62,7 +42,7 @@ uintptr_t GetModuleBase()
 }
 
 // =====================================================
-// Resolve X / Z base 
+// Resolve X/Z base
 // =====================================================
 
 uintptr_t ResolveXZ()
@@ -90,7 +70,7 @@ uintptr_t ResolveXZ()
 }
 
 // =====================================================
-// Resolve Y base 
+// Resolve Y base
 // =====================================================
 
 uintptr_t ResolveY()
@@ -118,7 +98,7 @@ uintptr_t ResolveY()
 }
 
 // =====================================================
-// NETWORK THREAD 
+// Safe float printing (2 decimals, no CRT)
 // =====================================================
 
 DWORD WINAPI NetThread(LPVOID)
@@ -170,16 +150,9 @@ DWORD WINAPI NetThread(LPVOID)
             }
         }
 
-        Sleep(300);
+        Sleep(300); // ~3 updates per second
     }
 
-    // DISCONNECT 
-    pkt.type = 3;
-    sendto(sock, (char*)&pkt, sizeof(pkt), 0,
-        (sockaddr*)&server, sizeof(server));
-
-    closesocket(sock);
-    WSACleanup();
     return 0;
 }
 
