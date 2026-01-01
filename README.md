@@ -10,6 +10,7 @@ The multiplayer system is implemented for now through:
 - **Peer-to-Peer (P2P) synchronization**
 
 The goal is mainly **technical and experimental**, to prove that a multiplayer layer can be added *from scratch* to a single-player game and also because for now it doesn't have any multiplayer wich would be so cool for this game
+In the future the DLL injection system will be gone and a server will be hosted manually on the first player computer, sending the data to the peer
 
 ---
 
